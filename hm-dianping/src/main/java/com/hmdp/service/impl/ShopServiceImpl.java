@@ -9,6 +9,7 @@ import com.hmdp.entity.Shop;
 import com.hmdp.mapper.ShopMapper;
 import com.hmdp.service.IShopService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hmdp.utils.CacheUtil;
 import com.hmdp.utils.RedisData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,18 +40,23 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
     private final StringRedisTemplate stringRedisTemplate;
 
-
+    @Resource
+    private CacheUtil cacheUtil;
 
     @Override
     public Result queryById(Long id) {
         // 缓存穿透
-        // Shop shop = queryWithPassThrough(id);
+         Shop shop = cacheUtil.queryWithPassThrough(
+                 CACHE_SHOP_KEY,id,Shop.class,
+                 this::getById,CACHE_SHOP_TTL,TimeUnit.MINUTES);
 
         // 互斥锁 + 缓存穿透
-         Shop shop = queryWithMutex(id);
+        // Shop shop = queryWithMutex(id);
 
         // 逻辑过期
-        // Shop shop = queryWithLogicalExpire(id);
+         /*Shop shop = cacheUtil.queryWithLogicalExpire(
+                 CACHE_SHOP_KEY,id,Shop.class,
+                 this::getById,CACHE_SHOP_TTL,TimeUnit.MINUTES);*/
         if (shop == null) {
             return Result.fail("店铺不存在");
         }
@@ -57,7 +64,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         return Result.ok(shop);
     }
 
-    public Shop queryWithPassThrough(Long id){
+   /* public Shop queryWithPassThrough(Long id){
         // 这里我们缓存的是商铺的信息,上次我们用过hash存对象,这次试试string
         String shopJson = stringRedisTemplate.opsForValue().get(CACHE_SHOP_KEY + id);
 
@@ -216,6 +223,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + id, JSONUtil.toJsonStr(redisData));
     }
 
+    */
     @Override
     @Transactional()
     public Result update(Shop shop) {
