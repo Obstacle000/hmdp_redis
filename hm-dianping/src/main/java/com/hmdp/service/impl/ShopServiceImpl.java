@@ -11,8 +11,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import static com.hmdp.utils.RedisConstants.CACHE_SHOP_KEY;
+import java.util.concurrent.TimeUnit;
+
+import static com.hmdp.utils.RedisConstants.*;
 
 /**
  * <p>
@@ -38,19 +41,48 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 
         if (StrUtil.isNotBlank(shopJson)) {
             Shop shop = JSONUtil.toBean(shopJson, Shop.class);
+
             return Result.ok(shop);
         }
-
-        log.info("到这儿了没");
-        Shop shop = getById(id);
-        if (shop == null) {
+        // 判断空值
+        if(shopJson != null) {
+            // 不等于null就一定是空字符串
+            log.info("redis");
             return Result.fail("店铺不存在");
         }
 
-        stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + id, JSONUtil.toJsonStr(shop));
+
+        Shop shop = getById(id);
+        if (shop == null) {
+            // 写入空值
+            stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + id, "",CACHE_NULL_TTL, TimeUnit.MINUTES);
+
+            return Result.fail("店铺不存在");
+        }
+
+        stringRedisTemplate.opsForValue().set(CACHE_SHOP_KEY + id, JSONUtil.toJsonStr(shop),CACHE_SHOP_TTL, TimeUnit.MINUTES);
 
 
 
         return Result.ok(shop);
     }
+
+    @Override
+    @Transactional()
+    public Result update(Shop shop) {
+        Long id = shop.getId();
+        if (id == null) {
+            return Result.fail("店铺不能为空");
+        }
+
+        // 1. 更新数据库
+        updateById(shop);
+
+        // 2. 删除缓存
+        stringRedisTemplate.delete(CACHE_SHOP_KEY + id);
+        // 3. 返回结果
+        return Result.ok();
+    }
+
+
 }
