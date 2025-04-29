@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 public class RedisConfig {
     @Bean
     public RedissonClient redissonclient() {
-        //配置类
+        //配置类1
         Config config = new Config();
         //添加redis地址，这里添加了单点的地址，也可以使用config.useClusterServers()添加集群地址
         config.useSingleServer().setAddress("redis://192.168.194,128:6379").setPassword("123321");
