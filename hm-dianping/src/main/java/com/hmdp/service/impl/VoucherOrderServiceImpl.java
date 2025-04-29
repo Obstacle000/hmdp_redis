@@ -13,6 +13,8 @@ import com.hmdp.service.IVoucherService;
 import com.hmdp.utils.RedisIdWorker;
 import com.hmdp.utils.SimpleRedisLock;
 import com.hmdp.utils.UserHolder;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -39,6 +42,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    private RedissonClient redissonClient;
 
     @Override
     public Result seckillVoucher(Long voucherId) {
@@ -66,8 +72,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         // 这个intern()作用是去串池找和字符串值一样的地址引用返回给你,确保锁唯一
 
         // 创建锁对象
-        SimpleRedisLock lock = new SimpleRedisLock(stringRedisTemplate, "order:" + id);
-        boolean isLock = lock.tryLock(1200);
+        // SimpleRedisLock lock = new SimpleRedisLock(stringRedisTemplate, "order:" + id);
+        RLock lock = redissonClient.getLock("lock:order:" + id);
+        boolean isLock = lock.tryLock();;
         if (!isLock) {
             // 这里根据业务逻辑执行操作
             // 没拿到锁的原因是,一个用户尝试着并发的去抢购

@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class RedisConfig {
+public class RedissonConfig {
     @Bean
     public RedissonClient redissonclient() {
         //配置类1
