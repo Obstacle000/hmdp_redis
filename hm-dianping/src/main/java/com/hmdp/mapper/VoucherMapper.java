@@ -15,6 +15,10 @@ import java.util.List;
  * @since 2021-12-22
  */
 public interface VoucherMapper extends BaseMapper<Voucher> {
-
+    /**
+     * 外连接实现
+     * @param shopId
+     * @return
+     */
     List<Voucher> queryVoucherOfShop(@Param("shopId") Long shopId);
 }

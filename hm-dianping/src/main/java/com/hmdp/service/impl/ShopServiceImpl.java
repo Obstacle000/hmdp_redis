@@ -37,8 +37,8 @@ import static com.hmdp.utils.RedisConstants.*;
 @RequiredArgsConstructor
 @Slf4j
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
-
-    private final StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Resource
     private CacheUtil cacheUtil;
