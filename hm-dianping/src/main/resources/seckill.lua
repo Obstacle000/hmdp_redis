@@ -8,6 +8,8 @@
 local voucherId = ARGV[1];
 -- 用户id
 local userId = ARGV[2];
+-- oederid
+local orderId = ARGV[3];
 
 -- 库存的key 用..拼接字符串
 local stockKey = 'seckill:stock:' .. voucherId;
@@ -30,5 +32,9 @@ end
 -- 库存充足，没有下过单，扣库存、下单
 redis.call('INCRBY', stockKey, -1);
 redis.call('SADD', orderKey, userId);
+
+-- 发送消息到队列
+redis.call('XADD','stream.orders','*','userId', userId,'voucherId', voucherId,'id', orderId);
+
 -- 返回0，标识下单成功
 return 0;
