@@ -92,6 +92,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         // 6. 生成随机token
         // true意味着不带中划线
+        // 这里使用了token作为key,usermapu欧维值的Hash结构,模拟了jwt
         String token = UUID.randomUUID().toString(true);
         UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
         // 这里注意,我们的id是Long类型,而stringRedisTemplate.要求存的数据类型是string,得转换

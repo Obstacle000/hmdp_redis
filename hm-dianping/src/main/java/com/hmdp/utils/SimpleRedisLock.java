@@ -42,7 +42,7 @@ public class SimpleRedisLock implements ILock {
     public void unlock() {
         // 调用脚本
         stringRedisTemplate.execute(UNLOCK_SCRIPT,
-                Collections.singletonList(KEY_PREFIX + name),
+                Collections.singletonList(KEY_PREFIX + name), // 用来创建只有一个元素的集合
                 ID_PREFIX + Thread.currentThread().getId());
     }
 
