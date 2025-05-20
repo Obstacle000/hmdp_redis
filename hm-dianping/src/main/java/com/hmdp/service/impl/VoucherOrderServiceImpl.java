@@ -199,19 +199,25 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         private IVoucherOrderService proxy;
 
         @Override
+        @Transactional
         public Result seckillVoucher(Long voucherId) {
             // 1. 执行lua
             Long userId = UserHolder.getUser().getId();
 
             // 订单id(idWorker)
             long orderId = redisidWorker.nextId("order");
+            Long result = null;
 
-            // 判断资格 + 发送到消息队列
-            Long result = stringRedisTemplate.execute(
-                    SECKILL_SCRIPT,
-                    Collections.emptyList(),
-                    voucherId.toString(), userId.toString(), String.valueOf(orderId)
-            );
+            try {
+                // 判断资格 + 发送到消息队列
+                result = stringRedisTemplate.execute(
+                        SECKILL_SCRIPT,
+                        Collections.emptyList(),
+                        voucherId.toString(), userId.toString(), String.valueOf(orderId)
+                );
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             // 2. 判断是否为0
             int r = result.intValue();
             if (r != 0) {
