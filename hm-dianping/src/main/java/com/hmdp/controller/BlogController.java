@@ -10,6 +10,7 @@ import com.hmdp.service.IBlogService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.SystemConstants;
 import com.hmdp.utils.UserHolder;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -31,16 +32,14 @@ public class BlogController {
     @Resource
     private IBlogService blogService;
 
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
 
     @PostMapping
     public Result saveBlog(@RequestBody Blog blog) {
-        // 获取登录用户
-        UserDTO user = UserHolder.getUser();
-        blog.setUserId(user.getId());
-        // 保存探店博文
-        blogService.save(blog);
-        // 返回id
-        return Result.ok(blog.getId());
+
+        return blogService.saveBlog(blog);
     }
 
     @PutMapping("/like/{id}")
@@ -85,5 +84,11 @@ public class BlogController {
         // 获取当前页数据
         List<Blog> records = page.getRecords();
         return Result.ok(records);
+    }
+
+    @GetMapping("/of/follow")
+    public Result queryBlogOfFollow(@RequestParam("lastId") Long max, @RequestParam(value = "offset",defaultValue = "0") Integer offset ) {
+        // offset为空的时候意味着第一次来,给一个默认0
+        return blogService.queryBlogOfFollow(max,offset);
     }
 }
